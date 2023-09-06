@@ -1,9 +1,8 @@
-import { Outlet } from "react-router-dom";
-
+import Table from './components/Table'
 export default function MyApp() {
   return (
     <div>
-      <Outlet />
+      <Table/>
     </div>
   );
 }
