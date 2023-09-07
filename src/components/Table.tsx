@@ -1,174 +1,282 @@
 import * as React from "react";
-import Paper from "@mui/material/Paper";
-import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import TableCell from "@mui/material/TableCell";
-import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
-import TablePagination from "@mui/material/TablePagination";
-import TableRow from "@mui/material/TableRow";
-import Dialog from "./Dialog";
-import Chip from '@mui/material/Chip';
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import AddIcon from "@mui/icons-material/Add";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/DeleteOutlined";
+import SaveIcon from "@mui/icons-material/Save";
+import CancelIcon from "@mui/icons-material/Close";
+import {
+  GridRowsProp,
+  GridRowModesModel,
+  GridRowModes,
+  DataGrid,
+  GridColDef,
+  GridToolbarContainer,
+  GridActionsCellItem,
+  GridEventListener,
+  GridRowId,
+  GridRowModel,
+  GridRowEditStopReasons,
+} from "@mui/x-data-grid";
 
-interface Column {
-  id:
-    | "no"
-    | "date"
-    | "material"
-    | "party"
-    | "rate"
-    | "total"
-    | "amount"
-    | "paid";
-  label: string;
-  minWidth?: number;
-  align?: "right";
-  format?: (value: number) => string;
-}
-
-const columns: readonly Column[] = [
-  { id: "no", label: "No" },
-  { id: "paid", label: "Paid" },
+const initialRows: GridRowsProp = [
   {
-    id: "date",
-    label: "Date",
+    id: 1,
+    no: 1,
+    paid: "yes",
+    date: new Date(),
+    material: "Test",
+    party: "Testparty",
+    rate: 10,
+    total: 100,
+    amount: 1000,
   },
   {
-    id: "material",
-    label: "Material",
-  },
-  {
-    id: "party",
-    label: "Party",
-  },
-  {
-    id: "rate",
-    label: "Rate(1kg)",
-  },
-  {
-    id: "total",
-    label: "Total(kg)",
-  },
-  {
-    id: "amount",
-    label: "Amount",
+    id: 2,
+    no: 2,
+    paid: "no",
+    date: new Date(),
+    material: "Test2",
+    party: "Testparty2",
+    rate: 102,
+    total: 1002,
+    amount: 10002,
   },
 ];
 
-interface Data {
-  no: number;
-  date: string;
-  material: string;
-  party: string;
-  rate: number;
-  total: number;
-  amount: number;
-  paid: boolean;
+interface EditToolbarProps {
+  setRows: (newRows: (oldRows: GridRowsProp) => GridRowsProp) => void;
+  setRowModesModel: (
+    newModel: (oldModel: GridRowModesModel) => GridRowModesModel
+  ) => void;
 }
 
-function createData({
-  no,
-  material,
-  party,
-  rate,
-  total,
-  paid,
-}: {
-  no: number;
-  material: string;
-  party: string;
-  rate: number;
-  total: number;
-  paid?: boolean;
-}): Data {
-  return {
-    no,
-    amount: rate * total,
-    date: new Date().toLocaleDateString(),
-    material,
-    paid: !!paid,
-    party,
-    rate,
-    total,
-  };
-}
+function EditToolbar(props: EditToolbarProps) {
+  const { setRows, setRowModesModel } = props;
 
-export default function StickyHeadTable() {
-  const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(10);
-  const [rows, setRows] = React.useState<Data[]>([]);
-
-  const handleChangePage = (_event: unknown, newPage: number) => {
-    setPage(newPage);
+  const handleClick = () => {
+    const id = initialRows.length + 1;
+    setRows((oldRows) => [
+      ...oldRows,
+      {
+        id,
+        no: id,
+        paid: "no",
+        date: new Date(),
+        material: "",
+        party: "",
+        rate: 0,
+        total: 0,
+        amount: 0,
+      },
+    ]);
+    setRowModesModel((oldModel) => ({
+      ...oldModel,
+      [id]: { mode: GridRowModes.Edit, fieldToFocus: "paid" },
+    }));
   };
 
-  const handleChangeRowsPerPage = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setRowsPerPage(+event.target.value);
-    setPage(0);
-  };
-
-  const handleAdd = (data: any) => {
-    setRows(rows.concat(rows, createData({ no: rows.length + 1, ...data })));
-  };
-  const getCell = (column: Column, value: any) => {
-    if (column.label === "Paid") {
-      return <Chip size="small" label={value ? 'yes' : 'no'} clickable color={value ? 'primary' : 'error'} />
-    }
-    return column.format && typeof value === "number"
-      ? column.format(value)
-      : (value as any);
-  };
   return (
-    <Paper sx={{ width: "100%", height: "95vh", overflow: "hidden" }}>
-      <TableContainer sx={ {height: "calc(100vh - 150px)"}}>
-        <Table stickyHeader aria-label="sticky table">
-          <TableHead>
-            <TableRow>
-              {columns.map((column) => (
-                <TableCell
-                  key={column.id}
-                  align={column.align}
-                  style={{ minWidth: column.minWidth }}
-                >
-                  {column.label}
-                </TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {rows
-              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((row) => {
-                return (
-                  <TableRow hover role="checkbox" tabIndex={-1} key={row.no}>
-                    {columns.map((column) => {
-                      const value = row[column.id];
-                      return (
-                        <TableCell key={column.id} align={column.align}>
-                          {getCell(column, value)}
-                        </TableCell>
-                      );
-                    })}
-                  </TableRow>
-                );
-              })}
-          </TableBody>
-        </Table>
-      </TableContainer>
-      <TablePagination
-        rowsPerPageOptions={[10, 25, 100]}
-        component="div"
-        count={rows.length}
-        rowsPerPage={rowsPerPage}
-        page={page}
-        onPageChange={handleChangePage}
-        onRowsPerPageChange={handleChangeRowsPerPage}
+    <GridToolbarContainer>
+      <Button color="primary" startIcon={<AddIcon />} onClick={handleClick}>
+        Add record
+      </Button>
+    </GridToolbarContainer>
+  );
+}
+
+export default function FullFeaturedCrudGrid() {
+  const [rows, setRows] = React.useState(initialRows);
+  const [rowModesModel, setRowModesModel] = React.useState<GridRowModesModel>(
+    {}
+  );
+
+  const handleRowEditStop: GridEventListener<"rowEditStop"> = (
+    params,
+    event
+  ) => {
+    if (params.reason === GridRowEditStopReasons.rowFocusOut) {
+      event.defaultMuiPrevented = true;
+    }
+  };
+
+  const handleEditClick = (id: GridRowId) => () => {
+    setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.Edit } });
+  };
+
+  const handleSaveClick = (id: GridRowId) => () => {
+    setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
+  };
+
+  const handleDeleteClick = (id: GridRowId) => () => {
+    setRows(rows.filter((row) => row.id !== id));
+  };
+
+  const handleCancelClick = (id: GridRowId) => () => {
+    setRowModesModel({
+      ...rowModesModel,
+      [id]: { mode: GridRowModes.View, ignoreModifications: true },
+    });
+
+    const editedRow = rows.find((row) => row.id === id);
+    if (editedRow!.isNew) {
+      setRows(rows.filter((row) => row.id !== id));
+    }
+  };
+
+  const processRowUpdate = (newRow: GridRowModel) => {
+    const updatedRow = {
+      ...newRow,
+      amount: newRow.rate * newRow.total,
+      isNew: false,
+    };
+    setRows(
+      rows.map((row) =>
+        row.id === newRow.id
+          ? updatedRow
+          : { ...row, amount: row.rate * row.total }
+      )
+    );
+    return updatedRow;
+  };
+
+  const handleRowModesModelChange = (newRowModesModel: GridRowModesModel) => {
+    setRowModesModel(newRowModesModel);
+  };
+
+  const columns: GridColDef[] = [
+    {
+      field: "actions",
+      type: "actions",
+      headerName: "Actions",
+      width: 100,
+      cellClassName: "actions",
+      getActions: ({ id }) => {
+        const isInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit;
+
+        if (isInEditMode) {
+          return [
+            <GridActionsCellItem
+              icon={<SaveIcon />}
+              label="Save"
+              sx={{
+                color: "primary.main",
+              }}
+              onClick={handleSaveClick(id)}
+            />,
+            <GridActionsCellItem
+              icon={<CancelIcon />}
+              label="Cancel"
+              className="textPrimary"
+              onClick={handleCancelClick(id)}
+              color="inherit"
+            />,
+          ];
+        }
+
+        return [
+          <GridActionsCellItem
+            icon={<EditIcon />}
+            label="Edit"
+            className="textPrimary"
+            onClick={handleEditClick(id)}
+            color="inherit"
+          />,
+          <GridActionsCellItem
+            icon={<DeleteIcon />}
+            label="Delete"
+            onClick={handleDeleteClick(id)}
+            color="inherit"
+          />,
+        ];
+      },
+    },
+    {
+      field: "no",
+      headerName: "No",
+      width: 100,
+      type: "number",
+      editable: false,
+    },
+    {
+      field: "paid",
+      headerName: "Paid",
+      width: 80,
+      type: "singleSelect",
+      valueOptions: ["yes", "no"],
+      editable: true,
+    },
+    {
+      field: "date",
+      headerName: "Date",
+      type: "date",
+      width: 180,
+      editable: true,
+    },
+    {
+      field: "material",
+      headerName: "Material",
+      width: 220,
+      editable: true,
+    },
+    {
+      field: "party",
+      headerName: "Party",
+      width: 220,
+      editable: true,
+    },
+    {
+      field: "rate",
+      headerName: "Rate(1kg)",
+      width: 100,
+      type: "number",
+      editable: true,
+    },
+    {
+      field: "total",
+      headerName: "Total(kg)",
+      width: 100,
+      type: "number",
+      editable: true,
+    },
+    {
+      field: "amount",
+      headerName: "Amount",
+      width: 100,
+      type: "number",
+      editable: false,
+    },
+  ];
+
+  return (
+    <Box
+      sx={{
+        height: 400,
+        width: "100%",
+        "& .actions": {
+          color: "text.secondary",
+        },
+        "& .textPrimary": {
+          color: "text.primary",
+        },
+      }}
+    >
+      <DataGrid
+        rows={rows}
+        columns={columns}
+        editMode="row"
+        rowModesModel={rowModesModel}
+        onRowModesModelChange={handleRowModesModelChange}
+        onRowEditStop={handleRowEditStop}
+        processRowUpdate={processRowUpdate}
+        slots={{
+          toolbar: EditToolbar,
+        }}
+        slotProps={{
+          toolbar: { setRows, setRowModesModel },
+        }}
       />
-      <div style={{ display: "flex", justifyContent: "space-around" }}>
-        <Dialog onSave={handleAdd} />
-      </div>
-    </Paper>
+    </Box>
   );
 }
