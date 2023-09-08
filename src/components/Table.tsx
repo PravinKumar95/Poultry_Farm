@@ -6,6 +6,8 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/DeleteOutlined";
 import SaveIcon from "@mui/icons-material/Save";
 import CancelIcon from "@mui/icons-material/Close";
+import FileOpenIcon from "@mui/icons-material/FileOpen";
+
 import {
   GridRowsProp,
   GridRowModesModel,
@@ -20,7 +22,7 @@ import {
   GridRowEditStopReasons,
 } from "@mui/x-data-grid";
 import { Chip } from "@mui/material";
-
+import { getFileHandle, getNewFileHandle, readFile, writeFile } from "../helpers/fileSystem";
 const initialRows: GridRowsProp = [
   {
     id: 1,
@@ -47,6 +49,7 @@ const initialRows: GridRowsProp = [
 ];
 
 interface EditToolbarProps {
+  rows: GridRowsProp;
   setRows: (newRows: (oldRows: GridRowsProp) => GridRowsProp) => void;
   setRowModesModel: (
     newModel: (oldModel: GridRowModesModel) => GridRowModesModel
@@ -54,7 +57,7 @@ interface EditToolbarProps {
 }
 
 function EditToolbar(props: EditToolbarProps) {
-  const { setRows, setRowModesModel } = props;
+  const { rows, setRows, setRowModesModel } = props;
 
   const handleClick = () => {
     setRows((oldRows) => {
@@ -75,14 +78,29 @@ function EditToolbar(props: EditToolbarProps) {
           total: 0,
           amount: 0,
         },
-      ...oldRows,
-    ]});
+        ...oldRows,
+      ];
+    });
   };
-
+  const handleOpenFile = async () => {
+    const handle = await getFileHandle();
+    const file: File = await readFile(handle);
+      setRows(JSON.parse(await file.text()))
+  }
+  const handleSaveData = async () => {
+    const handle = await getNewFileHandle();
+    await writeFile(handle, JSON.stringify(rows));
+  };
   return (
     <GridToolbarContainer>
       <Button color="primary" startIcon={<AddIcon />} onClick={handleClick}>
         Add record
+      </Button>
+      <Button color="primary" startIcon={<FileOpenIcon />} onClick={handleOpenFile}>
+        Open File
+      </Button>
+      <Button color="primary" startIcon={<SaveIcon />} onClick={handleSaveData}>
+        Save File
       </Button>
     </GridToolbarContainer>
   );
@@ -201,7 +219,7 @@ export default function FullFeaturedCrudGrid() {
       type: "number",
       editable: false,
       align: "left",
-      headerAlign: 'left',
+      headerAlign: "left",
       disableColumnMenu: true,
     },
     {
@@ -213,7 +231,12 @@ export default function FullFeaturedCrudGrid() {
       disableColumnMenu: true,
       editable: true,
       renderCell: (params) => {
-        return <Chip label={params.value} color={params.value === "yes" ? "success" : "error"}/>;
+        return (
+          <Chip
+            label={params.value}
+            color={params.value === "yes" ? "success" : "error"}
+          />
+        );
       },
     },
     {
@@ -223,6 +246,7 @@ export default function FullFeaturedCrudGrid() {
       width: 100,
       editable: true,
       disableColumnMenu: true,
+      valueGetter: (params) => typeof params.value === "string" ? new Date(params.value) : params.value  
     },
     {
       field: "material",
@@ -244,8 +268,8 @@ export default function FullFeaturedCrudGrid() {
       width: 120,
       type: "number",
       editable: true,
-      align: 'left',
-      headerAlign: 'left',
+      align: "left",
+      headerAlign: "left",
       disableColumnMenu: true,
     },
     {
@@ -254,8 +278,8 @@ export default function FullFeaturedCrudGrid() {
       width: 120,
       type: "number",
       editable: true,
-      align: 'left',
-      headerAlign: 'left',
+      align: "left",
+      headerAlign: "left",
       disableColumnMenu: true,
     },
     {
@@ -264,8 +288,8 @@ export default function FullFeaturedCrudGrid() {
       width: 100,
       type: "number",
       editable: false,
-      align: 'left',
-      headerAlign: 'left',
+      align: "left",
+      headerAlign: "left",
       disableColumnMenu: true,
     },
   ];
@@ -295,7 +319,7 @@ export default function FullFeaturedCrudGrid() {
           toolbar: EditToolbar,
         }}
         slotProps={{
-          toolbar: { setRows, setRowModesModel },
+          toolbar: { rows, setRows, setRowModesModel },
         }}
       />
     </Box>
