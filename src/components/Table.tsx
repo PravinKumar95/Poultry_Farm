@@ -6,7 +6,6 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/DeleteOutlined";
 import SaveIcon from "@mui/icons-material/Save";
 import CancelIcon from "@mui/icons-material/Close";
-import FileOpenIcon from "@mui/icons-material/FileOpen";
 
 import {
   GridRowsProp,
@@ -22,34 +21,10 @@ import {
   GridRowEditStopReasons,
 } from "@mui/x-data-grid";
 import { Chip } from "@mui/material";
-import { getFileHandle, getNewFileHandle, readFile, writeFile } from "../helpers/fileSystem";
-const initialRows: GridRowsProp = [
-  {
-    id: 1,
-    no: 1,
-    paid: "yes",
-    date: new Date(),
-    material: "Test",
-    party: "Testparty",
-    rate: 10,
-    total: 100,
-    amount: 1000,
-  },
-  {
-    id: 2,
-    no: 2,
-    paid: "no",
-    date: new Date(),
-    material: "Test2",
-    party: "Testparty2",
-    rate: 102,
-    total: 1002,
-    amount: 10002,
-  },
-];
+
+const initialRows: GridRowsProp = [];
 
 interface EditToolbarProps {
-  rows: GridRowsProp;
   setRows: (newRows: (oldRows: GridRowsProp) => GridRowsProp) => void;
   setRowModesModel: (
     newModel: (oldModel: GridRowModesModel) => GridRowModesModel
@@ -57,7 +32,7 @@ interface EditToolbarProps {
 }
 
 function EditToolbar(props: EditToolbarProps) {
-  const { rows, setRows, setRowModesModel } = props;
+  const { setRows, setRowModesModel } = props;
 
   const handleClick = () => {
     setRows((oldRows) => {
@@ -82,25 +57,10 @@ function EditToolbar(props: EditToolbarProps) {
       ];
     });
   };
-  const handleOpenFile = async () => {
-    const handle = await getFileHandle();
-    const file: File = await readFile(handle);
-      setRows(JSON.parse(await file.text()))
-  }
-  const handleSaveData = async () => {
-    const handle = await getNewFileHandle();
-    await writeFile(handle, JSON.stringify(rows));
-  };
   return (
     <GridToolbarContainer>
       <Button color="primary" startIcon={<AddIcon />} onClick={handleClick}>
         Add record
-      </Button>
-      <Button color="primary" startIcon={<FileOpenIcon />} onClick={handleOpenFile}>
-        Open File
-      </Button>
-      <Button color="primary" startIcon={<SaveIcon />} onClick={handleSaveData}>
-        Save File
       </Button>
     </GridToolbarContainer>
   );
@@ -111,7 +71,29 @@ export default function FullFeaturedCrudGrid() {
   const [rowModesModel, setRowModesModel] = React.useState<GridRowModesModel>(
     {}
   );
-
+  const handleOpenFile = async () => {
+    const opfsRoot = await navigator.storage.getDirectory();
+    const fileHandle = await opfsRoot.getFileHandle("poultryFarmData.json", {
+      create: true,
+    });
+    const file = await fileHandle.getFile();
+    const contents = await file.text();
+    if (contents === "") {
+      handleSaveData("[]");
+      setRows([]);
+    } else {
+      setRows(JSON.parse(contents));
+    }
+  };
+  const handleSaveData = async (contents: string) => {
+    const opfsRoot = await navigator.storage.getDirectory();
+    const fileHandle = await opfsRoot.getFileHandle("poultryFarmData.json", {
+      create: true,
+    });
+    const writable = await fileHandle.createWritable();
+    await writable.write(contents);
+    await writable.close();
+  };
   const handleRowEditStop: GridEventListener<"rowEditStop"> = (
     params,
     event
@@ -158,6 +140,7 @@ export default function FullFeaturedCrudGrid() {
           : { ...row, amount: row.rate * row.total }
       )
     );
+
     return updatedRow;
   };
 
@@ -246,7 +229,10 @@ export default function FullFeaturedCrudGrid() {
       width: 100,
       editable: true,
       disableColumnMenu: true,
-      valueGetter: (params) => typeof params.value === "string" ? new Date(params.value) : params.value  
+      valueGetter: (params) =>
+        typeof params.value === "string"
+          ? new Date(params.value)
+          : params.value,
     },
     {
       field: "material",
@@ -294,6 +280,13 @@ export default function FullFeaturedCrudGrid() {
     },
   ];
 
+  React.useEffect(() => {
+    handleOpenFile();
+  }, []);
+
+  React.useEffect(() => {
+    handleSaveData(JSON.stringify(rows));
+  }, [rows]);
   return (
     <Box
       sx={{
@@ -319,7 +312,7 @@ export default function FullFeaturedCrudGrid() {
           toolbar: EditToolbar,
         }}
         slotProps={{
-          toolbar: { rows, setRows, setRowModesModel },
+          toolbar: { setRows, setRowModesModel },
         }}
       />
     </Box>
