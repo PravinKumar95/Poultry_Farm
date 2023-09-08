@@ -19,6 +19,7 @@ import {
   GridRowModel,
   GridRowEditStopReasons,
 } from "@mui/x-data-grid";
+import { Chip } from "@mui/material";
 
 const initialRows: GridRowsProp = [
   {
@@ -56,25 +57,26 @@ function EditToolbar(props: EditToolbarProps) {
   const { setRows, setRowModesModel } = props;
 
   const handleClick = () => {
-    const id = initialRows.length + 1;
-    setRows((oldRows) => [
+    setRows((oldRows) => {
+      const id = oldRows.length + 1;
+      setRowModesModel((oldModel) => ({
+        ...oldModel,
+        [id]: { mode: GridRowModes.Edit, fieldToFocus: "paid" },
+      }));
+      return [
+        {
+          id,
+          no: id,
+          paid: "no",
+          date: new Date(),
+          material: "",
+          party: "",
+          rate: 0,
+          total: 0,
+          amount: 0,
+        },
       ...oldRows,
-      {
-        id,
-        no: id,
-        paid: "no",
-        date: new Date(),
-        material: "",
-        party: "",
-        rate: 0,
-        total: 0,
-        amount: 0,
-      },
-    ]);
-    setRowModesModel((oldModel) => ({
-      ...oldModel,
-      [id]: { mode: GridRowModes.Edit, fieldToFocus: "paid" },
-    }));
+    ]});
   };
 
   return (
@@ -198,6 +200,9 @@ export default function FullFeaturedCrudGrid() {
       width: 100,
       type: "number",
       editable: false,
+      align: "left",
+      headerAlign: 'left',
+      disableColumnMenu: true,
     },
     {
       field: "paid",
@@ -205,40 +210,53 @@ export default function FullFeaturedCrudGrid() {
       width: 80,
       type: "singleSelect",
       valueOptions: ["yes", "no"],
+      disableColumnMenu: true,
       editable: true,
+      renderCell: (params) => {
+        return <Chip label={params.value} color={params.value === "yes" ? "success" : "error"}/>;
+      },
     },
     {
       field: "date",
       headerName: "Date",
       type: "date",
-      width: 180,
+      width: 100,
       editable: true,
+      disableColumnMenu: true,
     },
     {
       field: "material",
       headerName: "Material",
       width: 220,
       editable: true,
+      disableColumnMenu: true,
     },
     {
       field: "party",
       headerName: "Party",
       width: 220,
       editable: true,
+      disableColumnMenu: true,
     },
     {
       field: "rate",
       headerName: "Rate(1kg)",
-      width: 100,
+      width: 120,
       type: "number",
       editable: true,
+      align: 'left',
+      headerAlign: 'left',
+      disableColumnMenu: true,
     },
     {
       field: "total",
       headerName: "Total(kg)",
-      width: 100,
+      width: 120,
       type: "number",
       editable: true,
+      align: 'left',
+      headerAlign: 'left',
+      disableColumnMenu: true,
     },
     {
       field: "amount",
@@ -246,6 +264,9 @@ export default function FullFeaturedCrudGrid() {
       width: 100,
       type: "number",
       editable: false,
+      align: 'left',
+      headerAlign: 'left',
+      disableColumnMenu: true,
     },
   ];
 
