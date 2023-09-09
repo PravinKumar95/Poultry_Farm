@@ -6,7 +6,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/DeleteOutlined";
 import SaveIcon from "@mui/icons-material/Save";
 import CancelIcon from "@mui/icons-material/Close";
-
+import FileWorker from "../workers/fs?worker";
 import {
   GridRowsProp,
   GridRowModesModel,
@@ -68,6 +68,7 @@ function EditToolbar(props: EditToolbarProps) {
 
 export default function FullFeaturedCrudGrid() {
   const [rows, setRows] = React.useState(initialRows);
+  const fsWorkerRef = React.useRef(new FileWorker());
   const [rowModesModel, setRowModesModel] = React.useState<GridRowModesModel>(
     {}
   );
@@ -79,21 +80,15 @@ export default function FullFeaturedCrudGrid() {
     const file = await fileHandle.getFile();
     const contents = await file.text();
     if (contents === "") {
-      handleSaveData("[]");
-      setRows([]);
+      return;
     } else {
       setRows(JSON.parse(contents));
     }
   };
   const handleSaveData = async (contents: string) => {
-    const opfsRoot = await navigator.storage.getDirectory();
-    const fileHandle = await opfsRoot.getFileHandle("poultryFarmData.json", {
-      create: true,
-    });
-    const writable = await fileHandle.createWritable();
-    await writable.write(contents);
-    await writable.close();
+    fsWorkerRef.current.postMessage([contents]);
   };
+
   const handleRowEditStop: GridEventListener<"rowEditStop"> = (
     params,
     event
@@ -140,7 +135,6 @@ export default function FullFeaturedCrudGrid() {
           : { ...row, amount: row.rate * row.total }
       )
     );
-
     return updatedRow;
   };
 
@@ -280,13 +274,6 @@ export default function FullFeaturedCrudGrid() {
     },
   ];
 
-  React.useEffect(() => {
-    handleOpenFile();
-  }, []);
-
-  React.useEffect(() => {
-    handleSaveData(JSON.stringify(rows));
-  }, [rows]);
   return (
     <Box
       sx={{
@@ -300,6 +287,8 @@ export default function FullFeaturedCrudGrid() {
         },
       }}
     >
+      <Button onClick={handleOpenFile}>Load</Button>
+      <Button onClick={() => handleSaveData(JSON.stringify(rows))}>Save</Button>
       <DataGrid
         rows={rows}
         columns={columns}
