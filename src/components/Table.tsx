@@ -7,6 +7,7 @@ import DeleteIcon from "@mui/icons-material/DeleteOutlined";
 import SaveIcon from "@mui/icons-material/Save";
 import CancelIcon from "@mui/icons-material/Close";
 import FileWorker from "../workers/fs?worker";
+import { v4 as uid } from "uuid";
 import {
   GridRowsProp,
   GridRowModesModel,
@@ -36,7 +37,7 @@ function EditToolbar(props: EditToolbarProps) {
 
   const handleClick = () => {
     setRows((oldRows) => {
-      const id = oldRows.length + 1;
+      const id = uid();
       setRowModesModel((oldModel) => ({
         ...oldModel,
         [id]: { mode: GridRowModes.Edit, fieldToFocus: "paid" },
@@ -44,7 +45,6 @@ function EditToolbar(props: EditToolbarProps) {
       return [
         {
           id,
-          no: id,
           paid: "no",
           date: new Date(),
           material: "",
@@ -85,8 +85,9 @@ export default function FullFeaturedCrudGrid() {
       setRows(JSON.parse(contents));
     }
   };
+
   const handleSaveData = async (contents: string) => {
-    fsWorkerRef.current.postMessage([contents]);
+    fsWorkerRef.current.postMessage(contents);
   };
 
   const handleRowEditStop: GridEventListener<"rowEditStop"> = (
@@ -188,16 +189,6 @@ export default function FullFeaturedCrudGrid() {
           />,
         ];
       },
-    },
-    {
-      field: "no",
-      headerName: "No",
-      width: 100,
-      type: "number",
-      editable: false,
-      align: "left",
-      headerAlign: "left",
-      disableColumnMenu: true,
     },
     {
       field: "paid",

@@ -10,7 +10,9 @@ onmessage = async (event) => {
   const accessHandle = await draftFile.createSyncAccessHandle();
   const encoder = new TextEncoder();
   const writeBuffer = encoder.encode(event.data);
-  accessHandle.write(writeBuffer);
+  accessHandle.truncate(0);
+  accessHandle.flush();
+  accessHandle.write(writeBuffer, { at: 0 });
   accessHandle.flush();
   accessHandle.close();
 };
