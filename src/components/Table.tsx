@@ -279,7 +279,12 @@ export default function FullFeaturedCrudGrid() {
       }}
     >
       <Button onClick={handleOpenFile}>Load</Button>
-      <Button onClick={() => handleSaveData(JSON.stringify(rows))}>Save</Button>
+      <Button
+        style={{ marginLeft: 150 }}
+        onClick={() => handleSaveData(JSON.stringify(rows))}
+      >
+        Save
+      </Button>
       <DataGrid
         rows={rows}
         columns={columns}
