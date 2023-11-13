@@ -9,7 +9,7 @@ const useAuth = () => {
   useEffect(() => {
     const user = userPool.getCurrentUser();
     if (user) {
-      user.getSession((error: any, session: any) => {
+      user.getSession((_error: any, session: any) => {
         if (session) {
           setIsLoggedIn(session.isValid());
         }

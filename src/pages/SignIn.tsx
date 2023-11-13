@@ -69,10 +69,10 @@ export default function SignIn() {
         sessionStorage.setItem("isAuthenticated", "true");
         window.dispatchEvent(new Event("storage"));
       },
-      onFailure(err) {
+      onFailure(_err) {
         setIsError(true);
       },
-      newPasswordRequired(userAttributes, requiredAttributes) {
+      newPasswordRequired(userAttributes, _requiredAttributes) {
         // User was signed up by an admin and must provide new
         // password and required attributes, if any, to complete
         // authentication.
