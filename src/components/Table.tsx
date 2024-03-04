@@ -22,6 +22,7 @@ import {
   GridRowEditStopReasons,
 } from "@mui/x-data-grid";
 import { Chip } from "@mui/material";
+import { hello } from "../api";
 
 const initialRows: GridRowsProp = [];
 
@@ -265,6 +266,11 @@ export default function FullFeaturedCrudGrid() {
     },
   ];
 
+  React.useEffect(() => {
+    hello().then((res) =>
+      console.log(res.json().then((data) => console.log(data)))
+    );
+  }, []);
   return (
     <Box
       sx={{
