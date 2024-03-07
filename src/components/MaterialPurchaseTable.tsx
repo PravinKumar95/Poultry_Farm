@@ -6,7 +6,6 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/DeleteOutlined";
 import SaveIcon from "@mui/icons-material/Save";
 import CancelIcon from "@mui/icons-material/Close";
-import FileWorker from "../workers/fs?worker";
 import { v4 as uid } from "uuid";
 import {
   GridRowsProp,
@@ -34,33 +33,9 @@ interface EditToolbarProps {
 }
 
 function EditToolbar(props: EditToolbarProps) {
-  const { setRows, setRowModesModel } = props;
-
-  const handleClick = () => {
-    setRows((oldRows) => {
-      const id = uid();
-      setRowModesModel((oldModel) => ({
-        ...oldModel,
-        [id]: { mode: GridRowModes.Edit, fieldToFocus: "paid" },
-      }));
-      return [
-        {
-          id,
-          paid: "no",
-          date: new Date(),
-          material: "",
-          party: "",
-          rate: 0,
-          total: 0,
-          amount: 0,
-        },
-        ...oldRows,
-      ];
-    });
-  };
   return (
     <GridToolbarContainer>
-      <Button color="primary" startIcon={<AddIcon />} onClick={handleClick}>
+      <Button color="primary" startIcon={<AddIcon />}>
         Add record
       </Button>
     </GridToolbarContainer>
@@ -69,27 +44,9 @@ function EditToolbar(props: EditToolbarProps) {
 
 export default function FullFeaturedCrudGrid() {
   const [rows, setRows] = React.useState(initialRows);
-  const fsWorkerRef = React.useRef(new FileWorker());
   const [rowModesModel, setRowModesModel] = React.useState<GridRowModesModel>(
     {}
   );
-  const handleOpenFile = async () => {
-    const opfsRoot = await navigator.storage.getDirectory();
-    const fileHandle = await opfsRoot.getFileHandle("poultryFarmData.json", {
-      create: true,
-    });
-    const file = await fileHandle.getFile();
-    const contents = await file.text();
-    if (contents === "") {
-      return;
-    } else {
-      setRows(JSON.parse(contents));
-    }
-  };
-
-  const handleSaveData = async (contents: string) => {
-    fsWorkerRef.current.postMessage(contents);
-  };
 
   const handleRowEditStop: GridEventListener<"rowEditStop"> = (
     params,
@@ -271,6 +228,7 @@ export default function FullFeaturedCrudGrid() {
       console.log(res.json().then((data) => console.log(data)))
     );
   }, []);
+
   return (
     <Box
       sx={{
@@ -284,13 +242,6 @@ export default function FullFeaturedCrudGrid() {
         },
       }}
     >
-      <Button onClick={handleOpenFile}>Load</Button>
-      <Button
-        style={{ marginLeft: 150 }}
-        onClick={() => handleSaveData(JSON.stringify(rows))}
-      >
-        Save
-      </Button>
       <DataGrid
         rows={rows}
         columns={columns}
